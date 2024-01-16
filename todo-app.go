@@ -19,16 +19,34 @@ type MainPageData struct {
 func main() {
 	t := template.Must(template.ParseFiles("templates/index.tmpl"))
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		err := t.Execute(w, MainPageData{PageTitle: "Todo App",
-			Todos: []Todo{
-				{Description: "Go to store"},
-				{Description: "Clean windows"},
-				{Description: "Pay taxes", Done: true},
-			}})
+	todos := []Todo{
+		{Description: "Go to store"},
+		{Description: "Clean windows"},
+		{Description: "Pay taxes", Done: true},
+	}
 
-		if err != nil {
-			fmt.Println(err)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			err := t.Execute(w, MainPageData{PageTitle: "Todo App", Todos: todos})
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+		case http.MethodPost:
+			if err := r.ParseForm(); err != nil {
+				fmt.Println(err)
+			}
+
+			newTodo := Todo{r.FormValue("description"), false}
+			todos = append(todos, newTodo)
+
+			err := t.Execute(w, MainPageData{PageTitle: "Todo App", Todos: todos})
+
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	})
 
